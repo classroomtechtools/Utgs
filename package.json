@@ -1,6 +1,6 @@
 {
   "name": "@classroomtechtools/unittesting",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Exports describe and it functions for unit testing purposes",
   "main": "index.js",
   "scripts": {
