@@ -1,0 +1,22 @@
+{
+  "name": "@classroomtechtools/unittesting",
+  "version": "1.1.0",
+  "description": "Exports describe and it functions for unit testing purposes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/classroomtechtools/npm-unittesting.git"
+  },
+  "author": "Adam Morris <classroomtechtools.ctt@gmail.com> (https://classroomtechtools.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/classroomtechtools/npm-unittesting/issues"
+  },
+  "homepage": "https://github.com/classroomtechtools/npm-unittesting#readme",
+  "dependencies": {
+    "@classroomtechtools/contextmanager": "^1.0.0"
+  }
+}
