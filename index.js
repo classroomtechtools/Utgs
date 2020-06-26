@@ -6,7 +6,7 @@ const log = function (str) {
 };
 
 export const getLogsAsString = () => _log.join('\n');
-export const getLogsAsArray = () => _log.splice();
+export const getLogsAsArray = () => _log.slice();
 
 var UtgsUnit = {};  // private methods
 
