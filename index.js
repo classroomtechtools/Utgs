@@ -722,9 +722,11 @@ export const assert = {
 
   describe: function (description, body) {
     let ctx = new UtgsUnit.Util.ContextManager();
-    ctx.enter = () => { log('\n\n' + description); };
+    ctx.enter = () => { _log = ['\n\n' + description]; };
     ctx.exit = () => {
-      log('\n');
+      _log.push('\n');
+      Logger.log(_log.join('\n'));
+      _log = [];
     };
     ctx.with(body);
   },
