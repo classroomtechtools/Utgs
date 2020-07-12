@@ -1,10 +1,14 @@
 {
   "name": "@classroomtechtools/unittesting",
   "version": "1.5.1",
+  "type": "module",
   "description": "Exports describe and it functions for unit testing purposes",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava"
+  },
+  "ava": {
+    "verbose": true
   },
   "repository": {
     "type": "git",
@@ -17,6 +21,9 @@
   },
   "homepage": "https://github.com/classroomtechtools/npm-unittesting#readme",
   "dependencies": {
-    "@classroomtechtools/contextmanager": "^1.0.0"
+    "@classroomtechtools/contextmanager": "^1.0.2"
+  },
+  "devDependencies": {
+    "ava": "^3.10.1"
   }
 }
