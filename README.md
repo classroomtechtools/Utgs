@@ -1,45 +1,22 @@
-# UnitTesting.gs
+# UnitTesting
 
-Assertion and unit testing of modular libraries.
+Assertion and unit testing of modular libraries. This is based on 
 
 ## UnitTesting.gs Quickstart
 
-Copy and paste the [code](https://github.com/classroomtechtools/modularLibraries.gs/blob/master/UnitTesting/UnitTesting.gs), and initialize it so that it is live.
+Intended to be used via node, `npm install @classroomtechtools/unittesting`.
 
-```js
-Import.UnitTesting.init();  // can be safely executed multiple times during execution
+## Unit tests!
 
-describe("Tests", function () {
-  it("This one fails", function () {
-    assert.equals({
-      comment: 'If it fails, it displays in the log',
-      expected: 'Yes',
-      actual: 'No'
-    });
-  });
-});
-```
+This package has unit tests on itself, which is also useful to check out how to use it.
 
-The output (minus log info):
+`npm run test`
+
+## API
+
+Every function on `assert` takes one parameters, which is an object. Most of them require `actual` and `expected`.
 
 ```
-Tests
-    ✘ tests
-        Error: Comment: This one fails  -- Failure: Expected Yes but was No at pkg.utgs.Utgs:189
-    at pkg.utgs.Utgs:157
-    at pkg.utgs.Utgs:449
-    at test:6
-    at pkg.utgs.Utgs:263
-    at pkg.utgs.Utgs:840
-    at test:5
-    at pkg.utgs.Utgs:263
-    at pkg.utgs.Utgs:823
-    at test:4 (myFunction)
-```
-
-List of available assertions. If there is a `{}` that means it is an object with `expected`, `actual` and optional `comment` properties. If `any` can be anything, if `func` must be a function.
-
-```js
 assert.equals({})
 assert.true_(any)
 assert.false_(any)
@@ -65,13 +42,7 @@ assert.throwsRangeError(func)
 assert.throwsReferenceError(func)
 
 assert.doesNotThrowError(func)
-
-
 ```
-
-## Unit tests!
-
-This package has unit tests on itself, which is also useful to check out how to use it.
 
 ## Motivation
 
