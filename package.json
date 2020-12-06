@@ -1,6 +1,6 @@
 {
   "name": "@classroomtechtools/unittesting",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "type": "module",
   "description": "Exports describe and it functions for unit testing purposes",
   "main": "src/modules/UnitTesting.js",
