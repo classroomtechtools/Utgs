@@ -92,8 +92,9 @@
   <section class="readme">
     <article>
       <h1>Utgs</h1>
-<p>A library that can be used by the Google AppsScript's online editor to conduct unit tests. Stands for Unit Testing with Google appsScripts.</p>
-<p>Documentation on usage available in /docs.</p>
+<p><strong>U</strong>nit <strong>T</strong>esting with <strong>G</strong>oogle apps<strong>S</strong>cripts</p>
+<p>A library that can be used by the online editor to conduct unit tests. You create a function such as Tests and declare how your code is supposed to work. Whenever you make changes to your code, you just run the test function to check.</p>
+<p>Documentation on usage <a href="https://classroomtechtools.github.io/Utgs/">is available</a>.</p>
 <h2>Quickstart</h2>
 <p>The project id is <code>1cSXAtmjHA61q0KXQLo4nVq7M2ISdhIq01qucWxbpPqZGYldoxE-hxF2R</code>. The default identifier is <code>Utgs</code></p>
 <pre class="prettyprint source lang-js"><code>function Tests () {
@@ -103,21 +104,30 @@
   // conduct your tests
   describe(&quot;Test Category 1&quot;, function () {
     it(&quot;This one fails&quot;, function () {
+
+      // do work
+      const value = myFunction(); 
+
       assert.equals({
         comment: 'If it fails, it displays in the log',
         expected: 'Yes',
-        actual: 'No'
+        actual: value
       });
     });
   });
 }
 </code></pre>
+<p>If <code>value</code> is not <code>&quot;Yes&quot;</code>, it throws an error that lets you track it down:</p>
+<pre class="prettyprint source"><code>Test Category 1
+  ✘ This one fails Error: Comment: If it fails, it displays in the log
+     -- Failure: Expected Yes but was No
+</code></pre>
+<h2>Node</h2>
 <p>Can also be installed via node, <code>npm install @classroomtechtools/unittesting</code>.</p>
-<h2>Unit tests!</h2>
 <p>This package has unit tests on itself, which is also useful to check out how to use it.</p>
 <p><code>npm run test</code></p>
 <h2>Motivation</h2>
-<p>Unit testing is worth it.</p>
+<p>Unit testing makes us better programmers.</p>
 <h2>Thanks</h2>
 <p>Much of the original code came from <a href="https://sites.google.com/site/scriptsexamples/custom-methods/gsunit">GSUnit</a>, with additional refactoring and the additional function assertions.</p>
     </article>
