@@ -15,17 +15,19 @@ function Tests () {
   // sorta like importing, this inits the variables
   const {describe, it, assert} = Utgs.module(); 
 
-  // conduct your tests
   describe("Test Category 1", function () {
-    it("This one fails", function () {
-
-      // do work
-      const value = myFunction(); 
-
+    it("Have the value of Yes", function () {
       assert.equals({
         comment: 'If it fails, it displays in the log',
         expected: 'Yes',
-        actual: value
+        actual: 'Yes'
+      });
+    });
+    it("Have the value of No", function () {
+      assert.equals({
+        comment: 'If it fails, it displays in the log',
+        expected: 'No',
+        actual: 'Yes'
       });
     });
   });
@@ -36,8 +38,9 @@ If `value` is not `"Yes"`, it throws an error that lets you track it down:
 
 ```
 Test Category 1
-  ✘ This one fails Error: Comment: If it fails, it displays in the log
-     -- Failure: Expected Yes but was No
+  ✔ Have the value of Yes
+  ✘ Have the value of No -> Error: Comment: If it fails, it displays in the log
+   ---> Error message: Expected <"No"> (String) but was <"Yes"> (String)
 ```
 
 But when everything works, bask in the glory of lots of glorious check marks.
