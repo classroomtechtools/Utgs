@@ -14,5 +14,5 @@
  * @see https://goog.it
  */
 function module() {
-  return Import;
+  return Import.UtgsObject;
 }

@@ -2,7 +2,7 @@
 
 **U**nit **T**esting with **G**oogle apps**S**cripts
 
-A library that can be used by the online editor to conduct unit tests. You create a function such as Tests and declare how your code is supposed to work. Whenever you make changes to your code, you just run the test function to check.
+A library that can be used with the online editor to conduct unit tests. You create a function such as Tests and declare how your code is supposed to work. Whenever you make changes to your code, you just run the test function to check.
 
 Documentation on usage [is available](https://classroomtechtools.github.io/Utgs/).
 
@@ -40,7 +40,7 @@ Test Category 1
      -- Failure: Expected Yes but was No
 ```
 
-
+But when everything works, bask in the glory of lots of glorious check marks.
 
 ## Node
 
