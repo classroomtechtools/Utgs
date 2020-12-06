@@ -1,8 +1,10 @@
 # Utgs
 
-A library that can be used by the Google AppsScript's online editor to conduct unit tests. Stands for Unit Testing with Google appsScripts.
+**U**nit **T**esting with **G**oogle apps**S**cripts
 
-Documentation on usage available in /docs.
+A library that can be used by the online editor to conduct unit tests. You create a function such as Tests and declare how your code is supposed to work. Whenever you make changes to your code, you just run the test function to check.
+
+Documentation on usage [is available](https://classroomtechtools.github.io/Utgs/).
 
 ## Quickstart
 
@@ -16,19 +18,33 @@ function Tests () {
   // conduct your tests
   describe("Test Category 1", function () {
     it("This one fails", function () {
+
+      // do work
+      const value = myFunction(); 
+
       assert.equals({
         comment: 'If it fails, it displays in the log',
         expected: 'Yes',
-        actual: 'No'
+        actual: value
       });
     });
   });
 }
 ```
 
-Can also be installed via node, `npm install @classroomtechtools/unittesting`.
+If `value` is not `"Yes"`, it throws an error that lets you track it down:
 
-## Unit tests!
+```
+Test Category 1
+  ✘ This one fails Error: Comment: If it fails, it displays in the log
+     -- Failure: Expected Yes but was No
+```
+
+
+
+## Node
+
+Can also be installed via node, `npm install @classroomtechtools/unittesting`.
 
 This package has unit tests on itself, which is also useful to check out how to use it.
 
@@ -36,7 +52,7 @@ This package has unit tests on itself, which is also useful to check out how to 
 
 ## Motivation
 
-Unit testing is worth it.
+Unit testing makes us better programmers.
 
 ## Thanks
 
