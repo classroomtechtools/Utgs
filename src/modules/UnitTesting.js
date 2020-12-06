@@ -565,6 +565,7 @@ class assertions {
   * @param {String} [obj.comment] optional, displayed in the case of failure
   * @throws UtgsUnit.Failure if the values are not equal
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
+  * @see https://classroomtechtools.github.io/Utgs/module-Utgs-assertions.html#.equals
   * @example
   * const actual = 1;
   * const expected = 0;
@@ -579,10 +580,15 @@ class assertions {
   /**
   * Checks that the given boolean value is true.
   * @param {Object} obj
-  * @param {Any} obj.actual
+  * @param {Boolean} obj.actual
   * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the given value is not true
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
+  * @see https://classroomtechtools.github.io/Utgs/module-Utgs-assertions.html#.assert
+  * @example
+  * const {assert} = Utgs.module();
+  * const actual = true;
+  * assert.assert({actual, comment: 'should be boolean true'});
   */
   static assert(obj) {
     UtgsUnit.validateArguments(obj, 'actual');
@@ -594,8 +600,8 @@ class assertions {
 
 
   /**
-  * Synonym for true_
-  * @see #assert
+  * Synonym for assert
+  * @see https://classroomtechtools.github.io/Utgs/module-Utgs-assertions.html#.assert
   */
   static true_(obj) {
     this.assert(obj);
@@ -604,10 +610,15 @@ class assertions {
   /**
   * Checks that a boolean value is false.
   * @param {Object} obj
-  * @param {Any} obj.actual
+  * @param {Boolean} obj.actual
   * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if value is not false
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
+  * @see https://classroomtechtools.github.io/Utgs/module-Utgs-assertions.html#.false_
+  * @example
+  * const {assert} = Utgs.module();
+  * const actual = false;
+  * assert.false_({actual, comment: 'should be a false boolean'});
   */
   static false_(obj) {
     UtgsUnit.validateArguments(obj, 'actual');

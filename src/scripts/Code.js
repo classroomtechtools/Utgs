@@ -1,6 +1,7 @@
 /**
  * Returns the module object, which has `describe`, `it`, and `assert` properties.
  * @returns {module:Utgs.UtgsObject}
+ * @see https://classroomtechtools.github.io/Utgs/global.html#module
  * @example
  * // init the variables
  * const {describe, it, assert} = utgs.module();
@@ -11,7 +12,7 @@
  *         assert.equals({actual: 'yes', expected: 'yes'});
  *     })
  * });
- * @see https://goog.it
+ * @see https://classroomtechtools.github.io/Utgs/global.html#module
  */
 function module() {
   return Import.UtgsObject;
