@@ -2,8 +2,9 @@
 
 import {ContextManager} from '@classroomtechtools/contextmanager';
 
+const config = { defaultTransformString: '<{0}> ({0.typeof_})', loggerObject: (typeof Logger === undefined ? Logger : console), transformers: {} };
+
 const format = () => {
-  const config = { defaultTransformString: '<{0}> ({0.typeof_})', loggerObject: (typeof Logger === undefined ? Logger : console), transformers: {} };
   const global = this;
 
   //  ValueError :: String -> Error

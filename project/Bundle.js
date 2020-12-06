@@ -176,13 +176,232 @@ class ContextManager {
 
 /** @module Utgs **/
 
-var _log = [];
-const log = function (str) {
-  _log.push(str);
+const format = () => {
+  const config = { defaultTransformString: '<{0}> ({0.typeof_})', loggerObject: (typeof Logger === undefined ? Logger : console), transformers: {} };
+  const global = undefined;
+
+  //  ValueError :: String -> Error
+  var ValueError = function (message) {
+    var err = new Error(message);
+    err.name = 'ValueError';
+    return err;
+  };
+
+  //  defaultTo :: a,a? -> a
+  var defaultTo = function (x, y) {
+    return y == null ? x : y;
+  };
+
+  //  create :: Object -> String,*... -> String
+  var create = function () {
+
+    return function (template) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      var idx = 0;
+      var state = 'UNDEFINED';
+
+      return template.replace(
+        /([{}])\1|[{](.*?)(?:!(.+?))?[}]/g,
+        function (match, literal, key, xf) {
+          if (literal != null) {
+            return literal;
+          }
+          if (key.length > 0) {
+            if (state === 'IMPLICIT') {
+              throw ValueError('cannot switch from ' +
+                'implicit to explicit numbering');
+            }
+            state = 'EXPLICIT';
+          } else {
+            if (state === 'EXPLICIT') {
+              throw ValueError('cannot switch from ' +
+                'explicit to implicit numbering');
+            }
+            state = 'IMPLICIT';
+            key = String(idx);
+            idx += 1;
+          }
+          var value = defaultTo('', lookup(args, key.split('.')));
+          if (xf == null) {
+            return value;
+          } else if (Object.prototype.hasOwnProperty.call(config.transformers, xf)) {
+            return config.transformers[xf](value);
+          } else {
+            throw ValueError('no transformer named "' + xf + '"');
+          }
+        }
+      );
+    };
+  };
+
+  var lookup = function (obj, path) {
+    if (!/^\d+$/.test(path[0])) {
+      path = ['0'].concat(path);
+    }
+    for (var idx = 0; idx < path.length; idx += 1) {
+      var key = path[idx];
+      if (typeof obj[key] === 'function')
+        obj = obj[key]();
+      else
+        obj = obj[key];
+    }
+    return obj;
+  };
+
+  Object.defineProperty(Object.prototype, 'stringify', {
+    get: function () {
+      return function (pretty) {
+        pretty = pretty || false;
+        if (pretty)
+          return ( "") +
+            config.defaultTransformString.__format__(JSON.stringify(this, null, config.pprintWhitespace), this);
+        else
+          return config.defaultTransformString.__format__(JSON.stringify(this), this);
+      }
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(Object.prototype, 'typeof_', {
+    get: function () {
+      var result = typeof this;
+      switch (result) {
+        case 'string':
+          break;
+        case 'boolean':
+          break;
+        case 'number':
+          break;
+        case 'object':
+        case 'function':
+          switch (this.constructor) {
+            case new String().constructor:
+              result = 'String';
+              break;
+            case new Boolean().constructor:
+              result = 'Boolean';
+              break;
+            case new Number().constructor:
+              result = 'Number';
+              break;
+            case new Array().constructor:
+              result = 'Array';
+              break;
+            case new RegExp().constructor:
+              result = 'RegExp';
+              break;
+            case new Date().constructor:
+              result = 'Date';
+              break;
+            case Function:
+              result = 'Function';
+              break;
+            default:
+              result = this.constructor.toString();
+              var m = this.constructor.toString().match(/function\s*([^( ]+)\(/);
+              if (m)
+                result = m[1];
+              else
+                result = this.constructor.name;   // it's an ES6 class, use name of constructor
+              break;
+          }
+          break;
+      }
+      return result.substr(0, 1).toUpperCase() + result.substr(1);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(Object.prototype, 'print', {
+    get: function () {
+      return this.stringify(false);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(Object.prototype, '__print__', {
+    get: function () {
+      config.loggerObject.log.call(config.loggerObject, this.stringify(false));
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(Object.prototype, 'pprint', {
+    get: function () {
+      return this.stringify(true);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(Object.prototype, '__pprint__', {
+    get: function () {
+      config.loggerObject.log.call(config.loggerObject, this.stringify(true));
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(String.prototype, '__log__', {
+    get: function () {
+      return function () {
+        config.loggerObject.log.call(config.loggerObject, this.__format__.apply(this, Array.prototype.slice.call(arguments)));
+      }.bind(this);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(String.prototype, '__error__', {
+    get: function () {
+      return function () {
+        config.loggerObject.error.call(config.loggerObject, this.__format__.apply(this, Array.prototype.slice.call(arguments)));
+      }.bind(this);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(String.prototype, '__info__', {
+    get: function () {
+      return function () {
+        config.loggerObject.info.call(config.loggerObject, this.__format__.apply(this, Array.prototype.slice.call(arguments)));
+      }.bind(this);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(String.prototype, '__warn__', {
+    get: function () {
+      return function () {
+        config.loggerObject.warn.call(config.loggerObject, this.__format__.apply(this, Array.prototype.slice.call(arguments)));
+      }.bind(this);
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
+  Object.defineProperty(String.prototype, '__format__', {
+    get: function () {
+      var $format = create();
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(this);
+        return $format.apply(global, args);
+      }
+    },
+    configurable: true,
+    enumerable: false,
+  });
+
 };
 
-const getLogsAsString = () => _log.join('\n');
-const getLogsAsArray = () => _log.slice();
+format();  // setup the .__print__;
 
 /**
  * The building block
@@ -196,7 +415,7 @@ var UtgsUnit_UNDEFINED_VALUE;
 /**
 * Predicate used for testing JavaScript == (i.e. equality excluding type)
 */
-UtgsUnit.DOUBLE_EQUALITY_PREDICATE = (var1, var2) =>  var1 == var2;
+UtgsUnit.DOUBLE_EQUALITY_PREDICATE = (var1, var2) => var1 == var2;
 
 /**
 * Predicate used for testing JavaScript === (i.e. equality including type)
@@ -218,11 +437,11 @@ UtgsUnit.TO_STRING_EQUALITY_PREDICATE = (var1, var2) => var1.toString() === var2
 * Hash of predicates for testing equality by primitive type
 */
 UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES = {
-  'String':   UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
-  'Number':   UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
-  'Boolean':  UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
-  'Date':     UtgsUnit.DATE_EQUALITY_PREDICATE,
-  'RegExp':   UtgsUnit.TO_STRING_EQUALITY_PREDICATE,
+  'String': UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
+  'Number': UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
+  'Boolean': UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
+  'Date': UtgsUnit.DATE_EQUALITY_PREDICATE,
+  'RegExp': UtgsUnit.TO_STRING_EQUALITY_PREDICATE,
   'Function': UtgsUnit.TO_STRING_EQUALITY_PREDICATE
 };
 
@@ -231,7 +450,7 @@ UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES = {
 * @return String - the type of the given object
 * @private
 */
-UtgsUnit.trueTypeOf = function(something) {
+UtgsUnit.trueTypeOf = function (something) {
   var result = typeof something;
   try {
     switch (result) {
@@ -281,7 +500,7 @@ UtgsUnit.trueTypeOf = function(something) {
   }
 };
 
-UtgsUnit.displayStringForValue = function(aVar) {
+UtgsUnit.displayStringForValue = function (aVar) {
   let result = `<${aVar}>`;
   if (!(aVar === null || aVar === UtgsUnit_UNDEFINED_VALUE)) {
     result += ` (${UtgsUnit.trueTypeOf(aVar)})`;
@@ -289,9 +508,9 @@ UtgsUnit.displayStringForValue = function(aVar) {
   return result;
 };
 
-UtgsUnit.validateArguments = function(obj, fields) {
+UtgsUnit.validateArguments = function (obj, fields) {
   fields = fields.split(' ');
-  for (let f=0; f < fields.length; f++) {
+  for (let f = 0; f < fields.length; f++) {
     if (!obj.hasOwnProperty(fields[f])) {
       throw UtgsUnit.AssertionArgumentError(`Assertions needs property ${fields[f]} in obj argument`);
     }
@@ -308,7 +527,7 @@ UtgsUnit.checkNotNull = (aVar) => aVar !== null;
 /**
 * All assertions ultimately go through this method.
 */
-UtgsUnit.assert = function(comment, booleanValue, failureMessage) {
+UtgsUnit.assert = function (comment, booleanValue, failureMessage) {
   if (!booleanValue)
     throw new UtgsUnit.Failure(comment, failureMessage);
 };
@@ -321,7 +540,7 @@ UtgsUnit.assert = function(comment, booleanValue, failureMessage) {
 * @param message the reason for the failure
 * @ignore
 */
-UtgsUnit.Failure = function(comment, message) {
+UtgsUnit.Failure = function (comment, message) {
   /**
   * Declaration that this is a UtgsUnit.Failure
   * @ignore
@@ -343,7 +562,7 @@ UtgsUnit.Failure = function(comment, message) {
   let failComment = '';
   if (comment != null) failComment = `Comment: ${comment}`;
   message = message || '';
-  throw Error(`${failComment}\n\t\t -- Failure: ${message}\n    `);
+  throw Error(`${failComment}\n\t ---> Error message: ${message}\n    `);
 };
 
 
@@ -354,7 +573,7 @@ UtgsUnit.Failure = function(comment, message) {
 * @param description a description of the argument error
 * @ignore
 */
-UtgsUnit.AssertionArgumentError = function(description) {
+UtgsUnit.AssertionArgumentError = function (description) {
   /**
   * A description of the argument error
   */
@@ -366,7 +585,7 @@ UtgsUnit.AssertionArgumentError = function(description) {
 UtgsUnit.Util = {};
 try {
   UtgsUnit.Util.ContextManager = ContextManager;
-} catch(err) {
+} catch (err) {
   throw Error("Please install ContextManager")
 }
 
@@ -375,7 +594,7 @@ try {
 * the innerHTML back
 * @param html
 */
-UtgsUnit.Util.standardizeHTML = function(html) {
+UtgsUnit.Util.standardizeHTML = function (html) {
   let translator = document.createElement("DIV");
   translator.innerHTML = html;
   return UtgsUnit.Util.trim(translator.innerHTML);
@@ -385,7 +604,7 @@ UtgsUnit.Util.standardizeHTML = function(html) {
 * Returns whether the given string is blank after being trimmed of whitespace
 * @param string
 */
-UtgsUnit.Util.isBlank = function(string) {
+UtgsUnit.Util.isBlank = function (string) {
   return UtgsUnit.Util.trim(string) == '';
 };
 
@@ -393,7 +612,7 @@ UtgsUnit.Util.isBlank = function(string) {
 * Returns the name of the given function, or 'anonymous' if it has no name
 * @param aFunction
 */
-UtgsUnit.Util.getFunctionName = function(aFunction) {
+UtgsUnit.Util.getFunctionName = function (aFunction) {
   const regexpResult = aFunction.toString().match(/function(\s*)(\w*)/);
   if (regexpResult && regexpResult.length >= 2 && regexpResult[2]) {
     return regexpResult[2];
@@ -404,7 +623,7 @@ UtgsUnit.Util.getFunctionName = function(aFunction) {
 /**
 * Returns the current stack trace
 */
-UtgsUnit.Util.getStackTrace = function() {
+UtgsUnit.Util.getStackTrace = function () {
   let result = '';
 
   if (arguments.caller !== undefined) {
@@ -418,15 +637,12 @@ UtgsUnit.Util.getStackTrace = function() {
   }
   else { // Mozilla, not ECMA
     // fake an exception so we can get Mozilla's error stack
-    try
-    {
+    try {
       foo.bar;
     }
-    catch(exception)
-    {
+    catch (exception) {
       const stack = UtgsUnit.Util.parseErrorStack(exception);
-      for (let i = 1; i < stack.length; i++)
-      {
+      for (let i = 1; i < stack.length; i++) {
         result += `> ${stack[i]}\n`;
       }
     }
@@ -439,7 +655,7 @@ UtgsUnit.Util.getStackTrace = function() {
 * Returns an array of stack trace elements from the given exception
 * @param exception
 */
-UtgsUnit.Util.parseErrorStack = function(exception) {
+UtgsUnit.Util.parseErrorStack = function (exception) {
   let stack = [];
 
   if (!exception || !exception.stack) {
@@ -470,7 +686,7 @@ UtgsUnit.Util.parseErrorStack = function(exception) {
 * Strips whitespace from either end of the given string
 * @param string
 */
-UtgsUnit.Util.trim = function(string) {
+UtgsUnit.Util.trim = function (string) {
   if (string == null)
     return null;
 
@@ -490,7 +706,7 @@ UtgsUnit.Util.trim = function(string) {
   return string.substring(startingIndex, endingIndex + 1);
 };
 
-UtgsUnit.Util.getKeys = function(obj) {
+UtgsUnit.Util.getKeys = function (obj) {
   let keys = [];
   for (const key in obj) {
     keys.push(key);
@@ -501,11 +717,13 @@ UtgsUnit.Util.getKeys = function(obj) {
 // private function here that makes context managers
 //:
 
-UtgsUnit.Util.inherit = function(superclass, subclass) {
-    var x = function() {};
-    x.prototype = superclass.prototype;
-    subclass.prototype = new x();
+UtgsUnit.Util.inherit = function (superclass, subclass) {
+  var x = function () { };
+  x.prototype = superclass.prototype;
+  subclass.prototype = new x();
 };
+
+let _log = [];
 
 /**
  * Holds assertion functions
@@ -527,7 +745,7 @@ class assertions {
   */
   static equals(obj) {
     UtgsUnit.validateArguments(obj, 'expected actual');
-    UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected, obj.actual), `Expected ${obj.expected} but was ${obj.actual}`);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected, obj.actual), `Expected ${obj.expected.pprint} but was ${obj.actual.pprint}`);
   }
 
 
@@ -540,11 +758,11 @@ class assertions {
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
   */
   static assert(obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      if (typeof(obj.actual) !== 'boolean')
-          throw new UtgsUnit.AssertionArgumentError('Bad argument to assert(boolean)');
+    UtgsUnit.validateArguments(obj, 'actual');
+    if (typeof (obj.actual) !== 'boolean')
+      throw new UtgsUnit.AssertionArgumentError('Bad argument to assert(boolean)');
 
-      UtgsUnit.assert(obj.comment, obj.actual === true, 'Call to assert(boolean) with false');
+    UtgsUnit.assert(obj.comment, obj.actual === true, 'Call to assert(boolean) with false');
   }
 
 
@@ -553,7 +771,7 @@ class assertions {
   * @see #assert
   */
   static true_(obj) {
-      this.assert(obj);
+    this.assert(obj);
   }
 
   /**
@@ -565,12 +783,12 @@ class assertions {
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
   */
   static false_(obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.validateArguments(obj, 'actual');
 
-      if (typeof(obj.actual) !== 'boolean')
-          throw new UtgsUnit.AssertionArgumentError('Bad argument to false_(boolean)');
+    if (typeof (obj.actual) !== 'boolean')
+      throw new UtgsUnit.AssertionArgumentError('Bad argument to false_(boolean)');
 
-      UtgsUnit.assert(obj.comment, obj.actual === false, 'Call to false_(boolean) with true');
+    UtgsUnit.assert(obj.comment, obj.actual === false, 'Call to false_(boolean) with true');
   }
 
   /**
@@ -582,9 +800,9 @@ class assertions {
   * @throws UtgsUnit.Failure if the values are equal
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static notEqual (obj) {
-      UtgsUnit.validateArguments(obj, 'expected actual');
-      UtgsUnit.assert(obj.comment, obj.expected !== obj.actual, `Expected not to be ${obj.expected}`);
+  static notEqual(obj) {
+    UtgsUnit.validateArguments(obj, 'expected actual');
+    UtgsUnit.assert(obj.comment, obj.expected !== obj.actual, `Expected not to be ${obj.expected}`);
   }
 
   /**
@@ -594,9 +812,9 @@ class assertions {
   * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is not null
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static null_ (obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      UtgsUnit.assert(obj.comment, obj.actual === null, `Expected ${UtgsUnit.displayStringForValue(null)} but was ${obj.actual}`);
+  static null_(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, obj.actual === null, `Expected ${UtgsUnit.displayStringForValue(null)} but was ${obj.actual}`);
   }
 
   /**
@@ -620,9 +838,9 @@ class assertions {
   * @throws UtgsUnit.Failure if the value is not undefined
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static undefined_ (obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      UtgsUnit.assert(obj.comment, obj.actual === UtgsUnit_UNDEFINED_VALUE, `Expected ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
+  static undefined_(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, obj.actual === UtgsUnit_UNDEFINED_VALUE, `Expected ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
   }
 
   /**
@@ -632,7 +850,7 @@ class assertions {
   * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is undefined
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static notUndefined (obj) {
+  static notUndefined(obj) {
     UtgsUnit.validateArguments(obj, 'actual');
     UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual), `Expected not to be ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)}`);
   }
@@ -644,7 +862,7 @@ class assertions {
   * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is a number
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static NaN_ (obj) {
+  static NaN_(obj) {
     UtgsUnit.validateArguments(obj, 'actual');
     UtgsUnit.assert(obj.comment, isNaN(obj.actual), 'Expected NaN');
   }
@@ -658,9 +876,9 @@ class assertions {
   * @throws UtgsUnit.Failure if the value is not a number
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static notNaN (obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      UtgsUnit.assert(obj.comment, !isNaN(obj.actual), 'Expected not NaN');
+  static notNaN(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, !isNaN(obj.actual), 'Expected not NaN');
   }
 
   /**
@@ -673,34 +891,36 @@ class assertions {
   * @throws UtgsUnit.Failure if the actual value does not equal the expected value
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static objectEquals (obj) {
-      UtgsUnit.validateArguments(obj, 'expected actual');
-      if (obj.expected === obj.actual)
-          return;
+  static objectEquals(obj) {
+    UtgsUnit.validateArguments(obj, 'expected actual');
+    if (obj.expected === obj.actual)
+      return;
 
-      let isEqual = false;
+    let isEqual = false;
 
-      const typeOfVar1 = UtgsUnit.trueTypeOf(obj.expected);
-      const typeOfVar2 = UtgsUnit.trueTypeOf(obj.actual);
-      if (typeOfVar1 == typeOfVar2) {
-          const primitiveEqualityPredicate = UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES[typeOfVar1];
-          if (primitiveEqualityPredicate) {
-              isEqual = primitiveEqualityPredicate(obj.expected, obj.actual);
-          } else {
-              const expectedKeys = UtgsUnit.Util.getKeys(obj.expected).sort().join(", ");
-              const actualKeys = UtgsUnit.Util.getKeys(obj.actual).sort().join(", ");
-              if (expectedKeys != actualKeys) {
-                  UtgsUnit.assert(obj.comment, false, `Expected keys ${expectedKeys} but found ${actualKeys}`);
-              }
-              for (const i in obj.expected) {
-                this.objectEquals({comment: `{obj.comment} nested ${typeOfVar1} key ${i}\n`,
-                                         expected:obj.expected[i],
-                                         actual:obj.actual[i]});
-              }
-              isEqual = true;
-          }
+    const typeOfVar1 = UtgsUnit.trueTypeOf(obj.expected);
+    const typeOfVar2 = UtgsUnit.trueTypeOf(obj.actual);
+    if (typeOfVar1 == typeOfVar2) {
+      const primitiveEqualityPredicate = UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES[typeOfVar1];
+      if (primitiveEqualityPredicate) {
+        isEqual = primitiveEqualityPredicate(obj.expected, obj.actual);
+      } else {
+        const expectedKeys = UtgsUnit.Util.getKeys(obj.expected).sort().join(", ");
+        const actualKeys = UtgsUnit.Util.getKeys(obj.actual).sort().join(", ");
+        if (expectedKeys != actualKeys) {
+          UtgsUnit.assert(obj.comment, false, `Expected keys ${expectedKeys} but found ${actualKeys}`);
+        }
+        for (const i in obj.expected) {
+          this.objectEquals({
+            comment: `{obj.comment} nested ${typeOfVar1} key ${i}\n`,
+            expected: obj.expected[i],
+            actual: obj.actual[i]
+          });
+        }
+        isEqual = true;
       }
-      UtgsUnit.assert(obj.comment, isEqual, `Expected ${UtgsUnit.displayStringForValue(obj.expected)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
+    }
+    UtgsUnit.assert(obj.comment, isEqual, `Expected ${UtgsUnit.displayStringForValue(obj.expected)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
   }
 
   /**
@@ -716,12 +936,12 @@ class assertions {
   * const expected = [1, 2, 3, 4];
   * assert.arrayEquals({actual, expected});
   */
-  static arrayEquals (obj) {
-      UtgsUnit.validateArguments(obj, 'expected actual');
-      if (UtgsUnit.trueTypeOf(obj.expected) != 'Array' || UtgsUnit.trueTypeOf(obj.actual) != 'Array') {
-          throw new UtgsUnit.AssertionArgumentError('Non-array passed to arrayEquals');
-      }
-      this.objectEquals(obj);
+  static arrayEquals(obj) {
+    UtgsUnit.validateArguments(obj, 'expected actual');
+    if (UtgsUnit.trueTypeOf(obj.expected) != 'Array' || UtgsUnit.trueTypeOf(obj.actual) != 'Array') {
+      throw new UtgsUnit.AssertionArgumentError('Non-array passed to arrayEquals');
+    }
+    this.objectEquals(obj);
   }
 
   /**
@@ -732,10 +952,10 @@ class assertions {
   * @throws UtgsUnit.Failure if the actual value does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static evaluatesToTrue (obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      if (!obj.actual)
-          this.fail(obj.comment);
+  static evaluatesToTrue(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    if (!obj.actual)
+      this.fail(obj.comment);
   }
 
   /**
@@ -746,10 +966,10 @@ class assertions {
   * @throws UtgsUnit.Failure if the actual value does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static evaluatesToFalse (obj) {
-      UtgsUnit.validateArguments(obj, 'actual');
-      if (obj.actual)
-          this.fail(obj.comment);
+  static evaluatesToFalse(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    if (obj.actual)
+      this.fail(obj.comment);
   }
 
   /**
@@ -763,18 +983,22 @@ class assertions {
   * @throws UtgsUnit.Failure if the actual hash does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static hashEquals (obj) {
+  static hashEquals(obj) {
     UtgsUnit.validateArguments(obj, 'actual expected');
     for (const key in obj.expected) {
-      this.notUndefined({comment: `Expected hash had key ${key} that was not found in actual`,
-                               actual:obj.actual[key]});
-      this.equals({comment:`Value for key ${key} mismatch -- expected = ${obj.expected[key]} actual = ${obj.actual[key]}`,
-                         expected:obj.expected[key],
-                         actual:obj.actual[key]}
-                       );
+      this.notUndefined({
+        comment: `Expected hash had key ${key} that was not found in actual`,
+        actual: obj.actual[key]
+      });
+      this.equals({
+        comment: `Value for key ${key} mismatch -- expected = ${obj.expected[key]} actual = ${obj.actual[key]}`,
+        expected: obj.expected[key],
+        actual: obj.actual[key]
+      }
+      );
     }
     for (var key in obj.actual) {
-      this.notUndefined({comment:`Actual hash had key ${key} that was not expected`, actual:obj.expected[key]});
+      this.notUndefined({ comment: `Actual hash had key ${key} that was not expected`, actual: obj.expected[key] });
     }
   }
 
@@ -788,10 +1012,12 @@ class assertions {
   * @throws UtgsUnit.Failure if the two values are not within tolerance of each other
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  static roughlyEquals (obj) {
+  static roughlyEquals(obj) {
     UtgsUnit.validateArguments(obj, 'actual expected tolerance');
-    this.true_({comment: `Expected ${obj.expected} but got ${obj.actual} which was more than ${obj.tolerance}  away`,
-                     actual:Math.abs(obj.expected - obj.actual) < obj.tolerance});
+    this.true_({
+      comment: `Expected ${obj.expected} but got ${obj.actual} which was more than ${obj.tolerance}  away`,
+      actual: Math.abs(obj.expected - obj.actual) < obj.tolerance
+    });
   }
 
   /**
@@ -802,10 +1028,12 @@ class assertions {
   * @throws UtgsUnit.Failure if the collection does not contain the value
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static contains (obj) {
+  static contains(obj) {
     UtgsUnit.validateArguments(obj, 'value collection');
-    this.true_({comment: `Expected ${obj.collection} to contain ${obj.value}`,
-                     actual: obj.collection.indexOf(obj.value) != -1});
+    this.true_({
+      comment: `Expected ${obj.collection} to contain ${obj.value}`,
+      actual: obj.collection.indexOf(obj.value) != -1
+    });
   }
 
   /**
@@ -818,34 +1046,36 @@ class assertions {
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
   static arrayEqualsIgnoringOrder(obj) {
-      UtgsUnit.validateArguments(obj, 'expected actual');
+    UtgsUnit.validateArguments(obj, 'expected actual');
 
-      const notEqualsMessage = `Expected arrays ${obj.expected} and ${obj.actual} to be equal (ignoring order)`;
-      const notArraysMessage = `Expected arguments ${obj.expected} and ${obj.actual} to be arrays`;
+    const notEqualsMessage = `Expected arrays ${obj.expected} and ${obj.actual} to be equal (ignoring order)`;
+    const notArraysMessage = `Expected arguments ${obj.expected} and ${obj.actual} to be arrays`;
 
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.expected), notEqualsMessage);
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.actual), notEqualsMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.expected), notEqualsMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.actual), notEqualsMessage);
 
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.length), notArraysMessage);
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.join), notArraysMessage);
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.length), notArraysMessage);
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.join), notArraysMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.length), notArraysMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.join), notArraysMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.length), notArraysMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.join), notArraysMessage);
 
-      UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected.length, obj.actual.length), notEqualsMessage);
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected.length, obj.actual.length), notEqualsMessage);
 
-      for (let i = 0; i < obj.expected.length; i++) {
-          let found = false;
-          for (let j = 0; j < obj.actual.length; j++) {
-              try {
-                this.objectEquals({comment: notEqualsMessage,
-                                         expected:obj.expected[i],
-                                         actual: obj.actual[j]});
-                  found = true;
-              } catch (ignored) {
-              }
-          }
-          UtgsUnit.assert(obj.comment, found, notEqualsMessage);
+    for (let i = 0; i < obj.expected.length; i++) {
+      let found = false;
+      for (let j = 0; j < obj.actual.length; j++) {
+        try {
+          this.objectEquals({
+            comment: notEqualsMessage,
+            expected: obj.expected[i],
+            actual: obj.actual[j]
+          });
+          found = true;
+        } catch (ignored) {
+        }
       }
+      UtgsUnit.assert(obj.comment, found, notEqualsMessage);
+    }
   }
 
   /**
@@ -858,9 +1088,9 @@ class assertions {
   * @throws UtgsUnit.Failure if expected error was not thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static throws (obj, func) {
+  static throws(obj, func) {
     UtgsUnit.validateArguments(obj, 'expectedError');
-    if (typeof(func) !== 'function') throw UtgsUnit.Failure("Must have function");
+    if (typeof (func) !== 'function') throw UtgsUnit.Failure("Must have function");
     let caughtError = false;
 
     try {
@@ -883,9 +1113,9 @@ class assertions {
   * @throws UtgsUnit.Failure if the unexected error is thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static doesNotThrow (obj, func) {
+  static doesNotThrow(obj, func) {
     UtgsUnit.validateArguments(obj, 'unexpectedError');
-    if (typeof(func) !== 'function') throw UtgsUnit.Failure("Must have function");
+    if (typeof (func) !== 'function') throw UtgsUnit.Failure("Must have function");
 
     try {
       func.call();
@@ -901,14 +1131,14 @@ class assertions {
   * @throws UtgsUnit.Failure if it does not throw an Error
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static throwsError (comment, func) {
+  static throwsError(comment, func) {
     const saved = this.result;
 
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
-    let ret = this.throws.call(this, {expectedError:Error}, func);
+    let ret = this.throws.call(this, { expectedError: Error }, func);
     if (this.result == false && saved == true) {
       this.result = true;
     }
@@ -922,12 +1152,12 @@ class assertions {
   * @throws UtgsUnit.Failure if an Error is thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static doesNotThrowError (comment, func) {
+  static doesNotThrowError(comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
-    return this.doesNotThrow.call(this, {unexpectedError: Error}, func);
+    return this.doesNotThrow.call(this, { unexpectedError: Error }, func);
   }
 
   /**
@@ -937,12 +1167,12 @@ class assertions {
   * @throws UtgsUnit.Failure if a Type error is not thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static throwsTypeError (comment, func) {
+  static throwsTypeError(comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
-    return this.throws.call(this, {expectedError: TypeError}, func);
+    return this.throws.call(this, { expectedError: TypeError }, func);
   }
 
   /**
@@ -952,13 +1182,15 @@ class assertions {
   * @throws UtgsUnit.Failure if Range error is not thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static throwsRangeError (comment, func) {
+  static throwsRangeError(comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
-    return this.throws.call(this, {expectedError: RangeError,
-                                         comment:comment}, func);
+    return this.throws.call(this, {
+      expectedError: RangeError,
+      comment: comment
+    }, func);
   }
 
   /**
@@ -968,24 +1200,28 @@ class assertions {
   * @throws UtgsUnit.Failure if Reference error is not thrown
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  static throwsReferenceError (comment, func) {
+  static throwsReferenceError(comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
-    return this.throws.call(this, {comment: comment,
-                                         expectedError: ReferenceError}, func);
+    return this.throws.call(this, {
+      comment: comment,
+      expectedError: ReferenceError
+    }, func);
   }
 
   /**
    * @ignore
    */
-  static describe (description, body) {
+  static describe(description, body) {
     let ctx = new UtgsUnit.Util.ContextManager();
-    ctx.head = () => { _log = ['\n\n' + description]; };
-    ctx.tail = () => {
+    ctx.head = function () {
+      _log = [description];
+    };
+    ctx.tail = function () {
       _log.push('\n');
-      Logger.log(_log.join('\n'));
+      config.loggerObject.log(_log.join('\n'));
       _log = [];
     };
     ctx.with(body);
@@ -994,7 +1230,7 @@ class assertions {
   /**
    * @ignore
    */
-  static withContext (body, options) {
+  static withContext(body, options) {
     let ctx = new UtgsUnit.Util.ContextManager(options);
     ctw.with(body);
   }
@@ -1002,19 +1238,19 @@ class assertions {
   /**
    * @ignore
    */
-  static it (shouldMessage, body) {
+  static it(shouldMessage, body) {
     let ctx = new UtgsUnit.Util.ContextManager();
-    ctx.head  = function () {
+    ctx.head = function (param) {
       this.result = "\t✔ " + shouldMessage;
     };
     ctx.error = function (err, obj) {
-      this.result = `\t✘ ${shouldMessage} ${err.stack}`;
-      return null;
+      this.result = `\t✘ ${shouldMessage} -> ${err.stack}`;
+      return null;  // swallow
     };
     ctx.tail = function (obj) {
-      log(this.result);
+      _log.push(this.result);
     };
-    ctx.params = {};
+
     //go
     ctx.with(body);
   }
@@ -1022,15 +1258,19 @@ class assertions {
   /**
    * @ignore
    */
-  static skip (shouldMessage, body) {
-    log("\t☛ " + shouldMessage + '... SKIPPED');
+  static skip(shouldMessage, body) {
+    _log("\t☛ " + shouldMessage + '... SKIPPED');
   }
 
   /**
    * @ignore
    */
-  static fail (failureMessage) {
-      throw new UtgsUnit.Failure("Call to fail()", failureMessage);
+  static fail(failureMessage) {
+    throw new UtgsUnit.Failure("Call to fail()", failureMessage);
+  }
+
+  static log (value) {
+    _log.push(value);
   }
 }
 
@@ -1040,7 +1280,7 @@ class assertions {
  * @property {It} it - the second level block
  * @property {module:Utgs~assert} assert - Object with assertions
  */
-const UtgsObject  = {
+const UtgsObject = {
   describe: function (name, func) {
     return assertions.describe(name, func);
   },
@@ -1051,8 +1291,6 @@ const UtgsObject  = {
 };
 
 exports.UtgsObject = UtgsObject;
-exports.getLogsAsArray = getLogsAsArray;
-exports.getLogsAsString = getLogsAsString;
 
 })(Import, this);
 try{exports.Import = Import;}catch(e){}
