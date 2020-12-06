@@ -1,11 +1,6 @@
-/**
- * Executes unit tests
- *
- * @return {number} the result of the exponential calculation
- */
-
-import {describe, it, assert} from '../index.js';
+import {UtgsObject} from '../src/modules/UnitTesting.js';
 import test from 'ava';
+const {describe, it, assert} = UtgsObject;
 
 /*
   Tests the assert* range of functions

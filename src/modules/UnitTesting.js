@@ -1,3 +1,5 @@
+/** @module Utgs **/
+
 import {ContextManager} from '@classroomtechtools/contextmanager';
 
 var _log = [];
@@ -8,11 +10,13 @@ const log = function (str) {
 export const getLogsAsString = () => _log.join('\n');
 export const getLogsAsArray = () => _log.slice();
 
+/**
+ * The building block
+ * @ignore
+ */
 var UtgsUnit = {};  // private methods
 
-/**
-* For convenience, a variable that equals "undefined"
-*/
+
 var UtgsUnit_UNDEFINED_VALUE;
 
 /**
@@ -111,14 +115,14 @@ UtgsUnit.displayStringForValue = function(aVar) {
   return result;
 }
 
-UtgsUnit.validateArguments = function(opt, fields) {
+UtgsUnit.validateArguments = function(obj, fields) {
   fields = fields.split(' ');
   for (let f=0; f < fields.length; f++) {
-    if (!opt.hasOwnProperty(fields[f])) {
-      throw UtgsUnit.AssertionArgumentError(`Assertions needs property ${fields[f]} in opt argument`);
+    if (!obj.hasOwnProperty(fields[f])) {
+      throw UtgsUnit.AssertionArgumentError(`Assertions needs property ${fields[f]} in obj argument`);
     }
   }
-  opt.comment = opt.comment || '';
+  obj.comment = obj.comment || '';
 }
 
 UtgsUnit.checkEquals = (var1, var2) => var1 === var2;
@@ -141,6 +145,7 @@ UtgsUnit.assert = function(comment, booleanValue, failureMessage) {
 * A UtgsUnit.Failure represents an assertion failure (or a call to fail()) during the execution of a Test Function
 * @param comment an optional comment about the failure
 * @param message the reason for the failure
+* @ignore
 */
 UtgsUnit.Failure = function(comment, message) {
   /**
@@ -173,6 +178,7 @@ UtgsUnit.Failure = function(comment, message) {
 * A UtgsUnitAssertionArgumentError represents an invalid call to an assertion function - either an invalid argument type
 * or an incorrect number of arguments
 * @param description a description of the argument error
+* @ignore
 */
 UtgsUnit.AssertionArgumentError = function(description) {
   /**
@@ -183,11 +189,6 @@ UtgsUnit.AssertionArgumentError = function(description) {
 }
 
 
-/**
-* @class
-* @constructor
-* Contains utility functions for the UtgsUnit framework
-*/
 UtgsUnit.Util = {};
 try {
   UtgsUnit.Util.ContextManager = ContextManager;
@@ -332,320 +333,359 @@ UtgsUnit.Util.inherit = function(superclass, subclass) {
     subclass.prototype = new x();
 }
 
-export const assert = {
-
-  FailError: UtgsUnit.Failure,
-
-  contextManager: UtgsUnit.Util.ContextManager,
+/**
+ * Holds assertion functions
+ */
+class assertions {
 
   /**
   * Checks that two values are equal (using ===)
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Value} expected the expected value
-  * @param {Value} actual the actual value
+  * @param {Object} obj
+  * @param {any} obj.actual the actual value
+  * @param {any} obj.expected the expected value
+  * @param {String} [obj.comment] optional, displayed in the case of failure
   * @throws UtgsUnit.Failure if the values are not equal
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
+  * @example
+  * const actual = 1;
+  * const expected = 0;
+  * assert.equals({actual, expected, comment: 'should be 0'})
   */
-  equals: function (opt) {
-    UtgsUnit.validateArguments(opt, 'expected actual');
-    UtgsUnit.assert(opt.comment, UtgsUnit.checkEquals(opt.expected, opt.actual), `Expected ${opt.expected} but was ${opt.actual}`);
-  },
+  static equals(obj) {
+    UtgsUnit.validateArguments(obj, 'expected actual');
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected, obj.actual), `Expected ${obj.expected} but was ${obj.actual}`);
+  }
 
 
   /**
   * Checks that the given boolean value is true.
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Boolean} value that is expected to be true
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the given value is not true
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
   */
-  assert: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      if (typeof(opt.actual) !== 'boolean')
+  static assert(obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      if (typeof(obj.actual) !== 'boolean')
           throw new UtgsUnit.AssertionArgumentError('Bad argument to assert(boolean)');
 
-      UtgsUnit.assert(opt.comment, opt.actual === true, 'Call to assert(boolean) with false');
-  },
+      UtgsUnit.assert(obj.comment, obj.actual === true, 'Call to assert(boolean) with false');
+  }
 
 
   /**
   * Synonym for true_
   * @see #assert
   */
-  true_: function (opt) {
-      this.assert(opt);
-  },
+  static true_(obj) {
+      this.assert(obj);
+  }
 
   /**
   * Checks that a boolean value is false.
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Boolean} value that is expected to be false
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if value is not false
   * @throws UtgsUnitInvalidAssertionArgument if the given value is not a boolean or if an incorrect number of arguments is passed
   */
-  false_: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
+  static false_(obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
 
-      if (typeof(opt.actual) !== 'boolean')
+      if (typeof(obj.actual) !== 'boolean')
           throw new UtgsUnit.AssertionArgumentError('Bad argument to false_(boolean)');
 
-      UtgsUnit.assert(opt.comment, opt.actual === false, 'Call to false_(boolean) with true');
-  },
+      UtgsUnit.assert(obj.comment, obj.actual === false, 'Call to false_(boolean) with true');
+  }
 
   /**
   * Checks that two values are not equal (using !==)
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Value} value1 a value
-  * @param {Value} value2 another value
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {Any} obj.expected
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the values are equal
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  notEqual: function (opt) {
-      UtgsUnit.validateArguments(opt, 'expected actual');
-      UtgsUnit.assert(opt.comment, opt.expected !== opt.actual, `Expected not to be ${opt.expected}`);
-  },
+  static notEqual (obj) {
+      UtgsUnit.validateArguments(obj, 'expected actual');
+      UtgsUnit.assert(obj.comment, obj.expected !== obj.actual, `Expected not to be ${obj.expected}`);
+  }
 
   /**
   * Checks that a value is null
-  * @param {opt}
-  * @throws UtgsUnit.Failure if the value is not null
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is not null
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  null_: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      UtgsUnit.assert(opt.comment, opt.actual === null, `Expected ${UtgsUnit.displayStringForValue(null)} but was ${opt.actual}`);
-  },
+  static null_ (obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      UtgsUnit.assert(obj.comment, obj.actual === null, `Expected ${UtgsUnit.displayStringForValue(null)} but was ${obj.actual}`);
+  }
 
   /**
   * Checks that a value is not null
-  * @param {opt} value the value
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the value is null
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  notNull: function(opt) {
-    UtgsUnit.validateArguments(opt, 'actual');
-    UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.actual), `Expected not to be ${UtgsUnit.displayStringForValue(null)}`);
-  },
+  static notNull(obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.actual), `Expected not to be ${UtgsUnit.displayStringForValue(null)}`);
+  }
 
   /**
   * Checks that a value is undefined
-  * @param {opt}
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the value is not undefined
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  undefined_: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      UtgsUnit.assert(opt.comment, opt.actual === UtgsUnit_UNDEFINED_VALUE, `Expected ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)} but was ${UtgsUnit.displayStringForValue(opt.actual)}`);
-  },
+  static undefined_ (obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      UtgsUnit.assert(obj.comment, obj.actual === UtgsUnit_UNDEFINED_VALUE, `Expected ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
+  }
 
   /**
   * Checks that a value is not undefined
-  * @param {opt} comment optional, displayed in the case of failure
-  * @throws UtgsUnit.Failure if the value is undefined
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is undefined
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  notUndefined: function (opt) {
-    UtgsUnit.validateArguments(opt, 'actual');
-    UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.actual), `Expected not to be ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)}`);
-  },
+  static notUndefined (obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual), `Expected not to be ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)}`);
+  }
 
   /**
   * Checks that a value is NaN (Not a Number)
-  * @param {opt} comment optional, displayed in the case of failure
-  * @throws UtgsUnit.Failure if the value is a number
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure  * @throws UtgsUnit.Failure if the value is a number
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  NaN_: function (opt) {
-    UtgsUnit.validateArguments(opt, 'actual');
-    UtgsUnit.assert(opt.comment, isNaN(opt.actual), 'Expected NaN');
-  },
+  static NaN_ (obj) {
+    UtgsUnit.validateArguments(obj, 'actual');
+    UtgsUnit.assert(obj.comment, isNaN(obj.actual), 'Expected NaN');
+  }
 
   /**
   * Checks that a value is not NaN (i.e. is a number)
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Number} value the value
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {Any} obj.expected
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the value is not a number
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  notNaN: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      UtgsUnit.assert(opt.comment, !isNaN(opt.actual), 'Expected not NaN');
-  },
+  static notNaN (obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      UtgsUnit.assert(obj.comment, !isNaN(obj.actual), 'Expected not NaN');
+  }
 
   /**
   * Checks that an object is equal to another using === for primitives and their object counterparts but also desceding
   * into collections and calling objectEquals for each element
-  * @param {Object} opt
+  * @param {Object} obj
+  * @param {Object} obj.actual
+  * @param {Object} obj.expected
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the actual value does not equal the expected value
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  objectEquals: function (opt) {
-      UtgsUnit.validateArguments(opt, 'expected actual');
-      if (opt.expected === opt.actual)
+  static objectEquals (obj) {
+      UtgsUnit.validateArguments(obj, 'expected actual');
+      if (obj.expected === obj.actual)
           return;
 
       let isEqual = false;
 
-      const typeOfVar1 = UtgsUnit.trueTypeOf(opt.expected);
-      const typeOfVar2 = UtgsUnit.trueTypeOf(opt.actual);
+      const typeOfVar1 = UtgsUnit.trueTypeOf(obj.expected);
+      const typeOfVar2 = UtgsUnit.trueTypeOf(obj.actual);
       if (typeOfVar1 == typeOfVar2) {
           const primitiveEqualityPredicate = UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES[typeOfVar1];
           if (primitiveEqualityPredicate) {
-              isEqual = primitiveEqualityPredicate(opt.expected, opt.actual);
+              isEqual = primitiveEqualityPredicate(obj.expected, obj.actual);
           } else {
-              const expectedKeys = UtgsUnit.Util.getKeys(opt.expected).sort().join(", ");
-              const actualKeys = UtgsUnit.Util.getKeys(opt.actual).sort().join(", ");
+              const expectedKeys = UtgsUnit.Util.getKeys(obj.expected).sort().join(", ");
+              const actualKeys = UtgsUnit.Util.getKeys(obj.actual).sort().join(", ");
               if (expectedKeys != actualKeys) {
-                  UtgsUnit.assert(opt.comment, false, `Expected keys ${expectedKeys} but found ${actualKeys}`);
+                  UtgsUnit.assert(obj.comment, false, `Expected keys ${expectedKeys} but found ${actualKeys}`);
               }
-              for (const i in opt.expected) {
-                this.objectEquals({comment: `{opt.comment} nested ${typeOfVar1} key ${i}\n`,
-                                         expected:opt.expected[i],
-                                         actual:opt.actual[i]});
+              for (const i in obj.expected) {
+                this.objectEquals({comment: `{obj.comment} nested ${typeOfVar1} key ${i}\n`,
+                                         expected:obj.expected[i],
+                                         actual:obj.actual[i]});
               }
               isEqual = true;
           }
       }
-      UtgsUnit.assert(opt.comment, isEqual, `Expected ${UtgsUnit.displayStringForValue(opt.expected)} but was ${UtgsUnit.displayStringForValue(opt.actual)}`);
-  },
+      UtgsUnit.assert(obj.comment, isEqual, `Expected ${UtgsUnit.displayStringForValue(obj.expected)} but was ${UtgsUnit.displayStringForValue(obj.actual)}`);
+  }
 
   /**
   * Checks that an array is equal to another by checking that both are arrays and then comparing their elements using objectEquals
-  * @param {Object}
-  *        {Object.expected} value the expected array
-  *        {Object.actual} value the actual array
+  * @param {Object} obj
+  * @param {Array} obj.actual
+  * @param {Array} obj.expected
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the actual value does not equal the expected value
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
+  * @example
+  * const actual = [1, 2, 3, 4];
+  * const expected = [1, 2, 3, 4];
+  * assert.arrayEquals({actual, expected});
   */
-  arrayEquals: function (opt) {
-      UtgsUnit.validateArguments(opt, 'expected actual');
-      if (UtgsUnit.trueTypeOf(opt.expected) != 'Array' || UtgsUnit.trueTypeOf(opt.actual) != 'Array') {
+  static arrayEquals (obj) {
+      UtgsUnit.validateArguments(obj, 'expected actual');
+      if (UtgsUnit.trueTypeOf(obj.expected) != 'Array' || UtgsUnit.trueTypeOf(obj.actual) != 'Array') {
           throw new UtgsUnit.AssertionArgumentError('Non-array passed to arrayEquals');
       }
-      this.objectEquals(opt);
-  },
+      this.objectEquals(obj);
+  }
 
   /**
   * Checks that a value evaluates to true in the sense that value == true
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Value} value the value
+  * @param {Object} obj
+  * @param {Any} obj.actual
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the actual value does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  evaluatesToTrue: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      if (!opt.actual)
-          this.fail(opt.comment);
-  },
+  static evaluatesToTrue (obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      if (!obj.actual)
+          this.fail(obj.comment);
+  }
 
   /**
   * Checks that a value evaluates to false in the sense that value == false
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Value} value the value
+  * @param {Object} obj
+  * @param {Any} obj.actual the value
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the actual value does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  evaluatesToFalse: function (opt) {
-      UtgsUnit.validateArguments(opt, 'actual');
-      if (opt.actual)
-          this.fail(opt.comment);
-  },
+  static evaluatesToFalse (obj) {
+      UtgsUnit.validateArguments(obj, 'actual');
+      if (obj.actual)
+          this.fail(obj.comment);
+  }
 
   /**
   * Checks that a hash is has the same contents as another by iterating over the expected hash and checking that each
   * key's value is present in the actual hash and calling equals on the two values, and then checking that there is
   * no key in the actual hash that isn't present in the expected hash.
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Object} value the expected hash
-  * @param {Object} value the actual hash
+  * @param {Object} obj
+  * @param {Object} obj.actual - value of the actual hash
+  * @param {Object} obj.expected - value of the expected hash
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the actual hash does not evaluate to true
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  hashEquals: function (opt) {
-    UtgsUnit.validateArguments(opt, 'actual expected');
-    for (const key in opt.expected) {
+  static hashEquals (obj) {
+    UtgsUnit.validateArguments(obj, 'actual expected');
+    for (const key in obj.expected) {
       this.notUndefined({comment: `Expected hash had key ${key} that was not found in actual`,
-                               actual:opt.actual[key]});
-      this.equals({comment:`Value for key ${key} mismatch -- expected = ${opt.expected[key]}, actual = ${opt.actual[key]}`,
-                         expected:opt.expected[key],
-                         actual:opt.actual[key]}
+                               actual:obj.actual[key]});
+      this.equals({comment:`Value for key ${key} mismatch -- expected = ${obj.expected[key]} actual = ${obj.actual[key]}`,
+                         expected:obj.expected[key],
+                         actual:obj.actual[key]}
                        );
     }
-    for (var key in opt.actual) {
-      this.notUndefined({comment:`Actual hash had key ${key} that was not expected`, actual:opt.expected[key]});
+    for (var key in obj.actual) {
+      this.notUndefined({comment:`Actual hash had key ${key} that was not expected`, actual:obj.expected[key]});
     }
-  },
+  }
 
   /**
   * Checks that two value are within a tolerance of one another
-  * @param {String} comment optional, displayed in the case of failure
-  * @param {Number} value1 a value
-  * @param {Number} value1 another value
-  * @param {Number} tolerance the tolerance
+  * @param {Object} obj
+  * @param {Number} obj.actual a value
+  * @param {Number} obj.expected another value
+  * @param {Number} obj.tolerance the tolerance
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the two values are not within tolerance of each other
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments is passed
   */
-  roughlyEquals: function (opt) {
-    UtgsUnit.validateArguments(opt, 'actual expected tolerance');
-    this.true_({comment: `Expected ${opt.expected} but got ${opt.actual} which was more than ${opt.tolerance}  away`,
-                     actual:Math.abs(opt.expected - opt.actual) < opt.tolerance});
-  },
+  static roughlyEquals (obj) {
+    UtgsUnit.validateArguments(obj, 'actual expected tolerance');
+    this.true_({comment: `Expected ${obj.expected} but got ${obj.actual} which was more than ${obj.tolerance}  away`,
+                     actual:Math.abs(obj.expected - obj.actual) < obj.tolerance});
+  }
 
   /**
   * Checks that a collection contains a value by checking that collection.indexOf(value) is not -1
-  * @param {Object}
-  * @param {Object.collection}
-  * @param {Object.value}
+  * @param {Object} obj
+  * @param {String|Array} obj.collection - any object with indexOf method
+  * @param {Any} obj.value
   * @throws UtgsUnit.Failure if the collection does not contain the value
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  contains: function (opt) {
-    UtgsUnit.validateArguments(opt, 'value collection');
-    this.true_({comment: `Expected ${opt.collection} to contain ${opt.value}`,
-                     actual: opt.collection.indexOf(opt.value) != -1});
-  },
+  static contains (obj) {
+    UtgsUnit.validateArguments(obj, 'value collection');
+    this.true_({comment: `Expected ${obj.collection} to contain ${obj.value}`,
+                     actual: obj.collection.indexOf(obj.value) != -1});
+  }
 
   /**
   * Checks that two arrays have the same contents, ignoring the order of the contents
-  * @param {Object}
-  * @param {Object.expected} array1 first array
-  * @param {Object.actual} second array
+  * @param {Object} obj
+  * @param {Array} obj.actual
+  * @param {Array} obj.expected
+  * @param {String} [obj.comment] - displayed in the case of failure
   * @throws UtgsUnit.Failure if the two arrays contain different contents
   * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
   */
-  arrayEqualsIgnoringOrder: function(opt) {
-      UtgsUnit.validateArguments(opt, 'expected actual');
+  static arrayEqualsIgnoringOrder(obj) {
+      UtgsUnit.validateArguments(obj, 'expected actual');
 
-      const notEqualsMessage = `Expected arrays ${opt.expected} and ${opt.actual} to be equal (ignoring order)`;
-      const notArraysMessage = `Expected arguments ${opt.expected} and ${opt.actual} to be arrays`;
+      const notEqualsMessage = `Expected arrays ${obj.expected} and ${obj.actual} to be equal (ignoring order)`;
+      const notArraysMessage = `Expected arguments ${obj.expected} and ${obj.actual} to be arrays`;
 
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.expected), notEqualsMessage);
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.actual), notEqualsMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.expected), notEqualsMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotNull(obj.actual), notEqualsMessage);
 
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.expected.length), notArraysMessage);
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.expected.join), notArraysMessage);
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.actual.length), notArraysMessage);
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.actual.join), notArraysMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.length), notArraysMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.expected.join), notArraysMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.length), notArraysMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkNotUndefined(obj.actual.join), notArraysMessage);
 
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkEquals(opt.expected.length, opt.actual.length), notEqualsMessage);
+      UtgsUnit.assert(obj.comment, UtgsUnit.checkEquals(obj.expected.length, obj.actual.length), notEqualsMessage);
 
-      for (let i = 0; i < opt.expected.length; i++) {
+      for (let i = 0; i < obj.expected.length; i++) {
           let found = false;
-          for (let j = 0; j < opt.actual.length; j++) {
+          for (let j = 0; j < obj.actual.length; j++) {
               try {
                 this.objectEquals({comment: notEqualsMessage,
-                                         expected:opt.expected[i],
-                                         actual: opt.actual[j]});
+                                         expected:obj.expected[i],
+                                         actual: obj.actual[j]});
                   found = true;
               } catch (ignored) {
               }
           }
-          UtgsUnit.assert(opt.comment, found, notEqualsMessage);
+          UtgsUnit.assert(obj.comment, found, notEqualsMessage);
       }
-  },
+  }
 
-  throws: function (opt, func) {
-    UtgsUnit.validateArguments(opt, 'expectedError');
+  /**
+  * Checks that a function throws an error - general function
+  * @ignore
+  * @param {Object} obj
+  * @param {Error} obj.expectedError
+  * @param {String} [obj.comment] - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if expected error was not thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static throws (obj, func) {
+    UtgsUnit.validateArguments(obj, 'expectedError');
     if (typeof(func) !== 'function') throw UtgsUnit.Failure("Must have function");
     let caughtError = false;
 
@@ -653,121 +693,172 @@ export const assert = {
       func.call();
     } catch (err) {
       caughtError = true;
-      UtgsUnit.assert(opt.comment, err instanceof opt.expectedError, `Expected thrown error to be of type ${(opt.expectedError.name || opt.expectedError.toString())}`);
+      UtgsUnit.assert(obj.comment, err instanceof obj.expectedError, `Expected thrown error to be of type ${(obj.expectedError.name || obj.expectedError.toString())}`);
     }
 
     if (!caughtError)
-      throw UtgsUnit.Failure("No error was thrown, expecting error of type '" + opt.expectedError.name);
-  },
+      throw UtgsUnit.Failure("No error was thrown, expecting error of type '" + obj.expectedError.name);
+  }
 
-  doesNotThrow: function (opt, func) {
-    UtgsUnit.validateArguments(opt, 'unexpectedError');
+  /**
+  * Checks that a function does NOT throw an error - general function
+  * @param {Object} obj
+  * @param {Error} obj.unexpectedError
+  * @param {String} [obj.comment] - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if the unexected error is thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static doesNotThrow (obj, func) {
+    UtgsUnit.validateArguments(obj, 'unexpectedError');
     if (typeof(func) !== 'function') throw UtgsUnit.Failure("Must have function");
 
     try {
       func.call();
     } catch (err) {
-      UtgsUnit.assert(opt.comment, err instanceof opt.unexpectedError, "Did not expect to throw error of type " + opt.unexpectedError.name);
+      UtgsUnit.assert(obj.comment, err instanceof obj.unexpectedError, "Did not expect to throw error of type " + obj.unexpectedError.name);
     }
-  },
+  }
 
-  /* TODO: Fix the use of assert.result */
-  throwsError: function (comment, func) {
-    const saved = assert.result;
+  /**
+  * Checks that a function throws an error
+  * @param {String} comment - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if it does not throw an Error
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static throwsError (comment, func) {
+    const saved = this.result;
 
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
     let ret = this.throws.call(this, {expectedError:Error}, func);
-    if (assert.result == false && saved == true) {
-      assert.result = true;
+    if (this.result == false && saved == true) {
+      this.result = true;
     }
     return ret;
-  },
+  }
 
-  doesNotThrowError: function (comment, func) {
+  /**
+  * Checks that a function throws an error
+  * @param {String} comment - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if an Error is thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static doesNotThrowError (comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
     return this.doesNotThrow.call(this, {unexpectedError: Error}, func);
-  },
+  }
 
-  throwsTypeError: function (comment, func) {
+  /**
+  * Checks that a function throws an error
+  * @param {String} comment - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if a Type error is not thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static throwsTypeError (comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
     return this.throws.call(this, {expectedError: TypeError}, func);
-  },
+  }
 
-  throwsRangeError: function (comment, func) {
+  /**
+  * Checks that a function throws an error
+  * @param {String} comment - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if Range error is not thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static throwsRangeError (comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
     return this.throws.call(this, {expectedError: RangeError,
                                          comment:comment}, func);
-  },
+  }
 
-  throwsReferenceError: function (comment, func) {
+  /**
+  * Checks that a function throws an error
+  * @param {String} comment - displayed in the case of failure
+  * @param {Function} func - any function, will be invoked
+  * @throws UtgsUnit.Failure if Reference error is not thrown
+  * @throws UtgsUnitInvalidAssertionArgument if an incorrect number of arguments are passed
+  */
+  static throwsReferenceError (comment, func) {
     if (arguments.length == 1) {
       func = comment;
       comment = '';
     }
     return this.throws.call(this, {comment: comment,
                                          expectedError: ReferenceError}, func);
-  },
+  }
 
-  describe: function (description, body) {
+  /**
+   * @ignore
+   */
+  static describe (description, body) {
     let ctx = new UtgsUnit.Util.ContextManager();
-    ctx.enter = () => { _log = ['\n\n' + description]; };
-    ctx.exit = () => {
+    ctx.head = () => { _log = ['\n\n' + description]; };
+    ctx.tail = () => {
       _log.push('\n');
       Logger.log(_log.join('\n'));
       _log = [];
     };
     ctx.with(body);
-  },
+  }
 
-  withContext: function (body, options) {
+  /**
+   * @ignore
+   */
+  static withContext (body, options) {
     let ctx = new UtgsUnit.Util.ContextManager(options);
     ctw.with(body);
-  },
+  }
 
-  it: function (shouldMessage, body) {
+  /**
+   * @ignore
+   */
+  static it (shouldMessage, body) {
     let ctx = new UtgsUnit.Util.ContextManager();
-    ctx.enter  = function () {
+    ctx.head  = function () {
       this.result = "\t✔ " + shouldMessage;
     };
     ctx.error = function (err, obj) {
       this.result = `\t✘ ${shouldMessage} ${err.stack}`;
       return null;
     };
-    ctx.exit = function (obj) {
+    ctx.tail = function (obj) {
       log(this.result);
     };
     ctx.params = {};
     //go
     ctx.with(body);
-  },
-
-  skip: function (shouldMessage, body) {
-    log("\t☛ " + shouldMessage + '... SKIPPED');
-  },
+  }
 
   /**
-  * Causes a failure
-  * @param failureMessage the message for the failure
-  */
-  fail: function (failureMessage) {
+   * @ignore
+   */
+  static skip (shouldMessage, body) {
+    log("\t☛ " + shouldMessage + '... SKIPPED');
+  }
+
+  /**
+   * @ignore
+   */
+  static fail (failureMessage) {
       throw new UtgsUnit.Failure("Call to fail()", failureMessage);
   }
 }
-
-export const describe = assert.describe;
-export const it = assert.it;
 
 let _result_ = Symbol('result');
 
@@ -867,3 +958,18 @@ class UnitTesting {
   }
 }
 
+/**
+ * @static
+ * @property {Describe} describe - the first level block
+ * @property {It} it - the second level block
+ * @property {module:Utgs~assert} assert - Object with assertions
+ */
+export const UtgsObject  = {
+  describe: function (name, func) {
+    return assertions.describe(name, func);
+  },
+  it: function (name, func) {
+    return assertions.it(name, func);
+  },
+  assert: assertions
+};

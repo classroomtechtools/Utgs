@@ -1,40 +1,35 @@
-# UnitTesting.gs
+# Utgs
 
-Assertion and unit testing of modular libraries.
+A library that can be used by the Google AppsScript's online editor to conduct unit tests. Stands for Unit Testing with Google appsScripts.
 
-## UnitTesting.gs Quickstart
+## Quickstart
 
-Copy and paste the [code](https://github.com/classroomtechtools/modularLibraries.gs/blob/master/UnitTesting/UnitTesting.gs), and initialize it so that it is live.
+The project id is `1cSXAtmjHA61q0KXQLo4nVq7M2ISdhIq01qucWxbpPqZGYldoxE-hxF2R`. The default identifier is `Utgs`
 
 ```js
-Import.UnitTesting.init();  // can be safely executed multiple times during execution
+function Tests () {
+  // sorta like importing, this inits the variables
+  const {describe, it, asset} = Utgs.module(); 
 
-describe("Tests", function () {
-  it("This one fails", function () {
-    assert.equals({
-      comment: 'If it fails, it displays in the log',
-      expected: 'Yes',
-      actual: 'No'
+  // conduct your tests
+  describe("Test Category 1", function () {
+    it("This one fails", function () {
+      assert.equals({
+        comment: 'If it fails, it displays in the log',
+        expected: 'Yes',
+        actual: 'No'
+      });
     });
   });
-});
+}
 ```
 
 The output (minus log info):
 
 ```
-Tests
-    ✘ tests
-        Error: Comment: This one fails  -- Failure: Expected Yes but was No at pkg.utgs.Utgs:189
-    at pkg.utgs.Utgs:157
-    at pkg.utgs.Utgs:449
-    at test:6
-    at pkg.utgs.Utgs:263
-    at pkg.utgs.Utgs:840
-    at test:5
-    at pkg.utgs.Utgs:263
-    at pkg.utgs.Utgs:823
-    at test:4 (myFunction)
+Test Category 1
+  ✘ This one fails Error: Comment: If it fails, it displays in the log
+     -- Failure: Expected Yes but was No
 ```
 
 List of available assertions. If there is a `{}` that means it is an object with `expected`, `actual` and optional `comment` properties. If `any` can be anything, if `func` must be a function.
