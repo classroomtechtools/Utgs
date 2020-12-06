@@ -13,7 +13,7 @@ The project id is `1cSXAtmjHA61q0KXQLo4nVq7M2ISdhIq01qucWxbpPqZGYldoxE-hxF2R`. T
 ```js
 function Tests () {
   // sorta like importing, this inits the variables
-  const {describe, it, asset} = Utgs.module(); 
+  const {describe, it, assert} = Utgs.module(); 
 
   // conduct your tests
   describe("Test Category 1", function () {
