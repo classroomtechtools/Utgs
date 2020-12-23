@@ -96,7 +96,11 @@
 <p>A library that can be used with the online editor to conduct unit tests. You create a function such as Tests and declare how your code is supposed to work. Whenever you make changes to your code, you just run the test function to check.</p>
 <p>Documentation on usage <a href="https://classroomtechtools.github.io/Utgs/">is available</a>.</p>
 <h2>Quickstart</h2>
-<p>The project id is <code>1cSXAtmjHA61q0KXQLo4nVq7M2ISdhIq01qucWxbpPqZGYldoxE-hxF2R</code>. The default identifier is <code>Utgs</code></p>
+<p>Use it as a library:</p>
+<ul>
+<li>The Script id is <code>1cSXAtmjHA61q0KXQLo4nVq7M2ISdhIq01qucWxbpPqZGYldoxE-hxF2R</code>.</li>
+<li>The default identifier is <code>Utgs</code></li>
+</ul>
 <pre class="prettyprint source lang-js"><code>function Tests () {
   // sorta like importing, this inits the variables
   const {describe, it, assert} = Utgs.module(); 
@@ -126,12 +130,137 @@
    ---> Error message: Expected &lt;&quot;No&quot;> (String) but was &lt;&quot;Yes&quot;> (String)
 </code></pre>
 <p>But when everything works, bask in the glory of lots of glorious check marks.</p>
+<h2>Examples</h2>
+<p>Use <code>objectEquals</code> to test that two different objects have the same keys and values on the keys. This test will fail:</p>
+<pre class="prettyprint source lang-js"><code>function Tests () {
+  // sorta like importing, this inits the variables
+  const {describe, it, assert} = Utgs.module(); 
+  describe(&quot;Test Object&quot;, function () {
+    it(&quot;objects are the same&quot;, function () {
+      assert.objectEquals({
+        comment: 'If it fails, it displays in the log',
+        expected: {yes: &quot;yes&quot;, no: &quot;no&quot;},
+        actual: {ha: &quot;ha&quot;, yes: &quot;yes&quot;}
+      });
+    });
+  });
+}
+</code></pre>
+<pre class="prettyprint source"><code>Test Object
+  ✘ objects are the same -> Error: Comment: If it fails, it displays in the log
+   ---> Error message: Expected keys no, yes but found ha, yes
+</code></pre>
+<p>Use <code>arrayEquals</code> to test that two different arrays are the same:</p>
+<pre class="prettyprint source lang-js"><code>function Tests () {
+  // sorta like importing, this inits the variables
+  const {describe, it, assert} = module(); 
+  describe(&quot;Test Object&quot;, function () {
+    it(&quot;objects are the same&quot;, function () {
+      assert.arrayEquals({
+        comment: 'If it fails, it displays in the log',
+        expected: [1, 2, 3],
+        actual: [1, 2]
+      });
+    });
+  });
+}
+</code></pre>
+<pre class="prettyprint source"><code>Test Object
+  ✘ objects are the same -> Error: Comment: If it fails, it displays in the log
+   ---> Error message: Expected keys 0, 1, 2 but found 0, 1
+    
+</code></pre>
+<p>The documentation provides all the other assertions available on the <code>assert</code> object.</p>
+<h2>Motivation</h2>
+<p>Unit testing lets us achieve assurance that our code is doing exactly what we think it's doing. In addition, the author wanted a way to write unit tests without having to rely on the built-in objects such as <code>SpreadsheetApp</code>.</p>
+<h2>Dependency Injection</h2>
+<p>The above unit test example test that the function returns some value. But much of code written with appscripts is really that simple.</p>
+<p>This section will illustrate how to also use it to implement unit tests that are more realistic, ones that have <em>side effects</em>, such as writing to a spreadsheet. These are known as side effects, as a function's result is not limited to a return value, but an effect that is produced by something it uses, a dependency.</p>
+<p>Specifically, how do we test API calls with Spreadsheet service, where it doesn't give us back anything but does have side effects that is producing the very thing we need to test for. How do we test a function that writes to a spreadsheet actually does write to the spreadsheet?</p>
+<p>There is a way, using a coding pattern called <strong>dependency injection</strong>. It's an appoach to writing functions where you declare your dependencies at the end of the function signature in an object with default values. Here's a simple example, where we're using the <code>Math</code> object to write a <code>floor</code> function:</p>
+<pre class="prettyprint source lang-js"><code>function floor (num, {dependency=Math}={}) {
+  return dependency.floor(num);
+}
+floor(1); // uses Math since it's the default value for dependency variable
+</code></pre>
+<p>The above example is not very useful, but illustrates the mechanism. Instead of the function body using the name of the dependency, we've wired it so that it's using a variable <code>dependency</code> whose default value, if it is called as normal without defining  the last object specifically, will be <code>Math</code>. That gives us a function where we can change the dependency it actually uses … and in this case completely changes what it does:</p>
+<pre class="prettyprint source lang-js"><code>const MathLike = {floor: (num) => num + 'floor'};
+floor(1, {depedency: MathLike});  // &quot;1floor&quot;
+</code></pre>
+<p>We can use this approach to test for side effects.</p>
+<h3>Dependency Injection in action</h3>
+<p>Let's say we want to write a function that writes some values in a spreadsheet to <code>x</code> row. So for example <code>writeRow('Sheet1', 3, ['a', 'b', 'c'])</code> will make row <code>3</code> have <code>[1, 2, 3]</code>in the sheet <code>Sheet1</code>.</p>
+<pre class="prettyprint source lang-js"><code>/**
+ * Write a spreadsheet row, starting from column A to however many values are contained in values param
+ * @param {String} sheet - The sheet name
+ * @param {Number} row - the row number which will take the values 
+ * @param {Any[]} values - an array that represents the rows
+ */
+function writeRow (sheet, row, values) {
+  const sheet = SpreadsheetApp.getSheetByName(sheet);
+  const range = sheet.getRange(`A${row}:${row}`);
+  range.setValues([values])
+}
+</code></pre>
+<p>So how do we test it? Shouldn't we test that it actually writes to the spreadsheet as expected? So let it execute the <code>setValues</code>, then read it back in, and check you got the expected result. The author suggests we do not. We just need to test that the call to <code>setValue</code> has some side effect, but not the default side effect of actually writing to a spreadsheet. That's where dependency injection comes in.</p>
+<p>Let's rewrite our function that incorporates dependency injection, which is just a way of providing some parameters at the end of the function signature. We have to rewrite the body, though, so that we use <code>Spreadsheet_App</code> instead of the direct <code>SpreadsheetApp</code>, but if this last parameter is not passed, the former will actually be the latter.</p>
+<pre class="prettyprint source lang-js"><code>function writeRow (sheet, row, values, {Spreadsheet_App=SpreadsheetApp}={}) {
+  const sheet = Spreadsheet_App.getActiveSpreadsheet().getSheetByName(sheet);
+  const range = sheet.getRange(`A${row}:${row}`);
+  range.setValues([values])
+}
+</code></pre>
+<p>This is a function we can test for the side effect directly.</p>
+<p>The idea of how to use it can be represented here. When we call <code>writeRow</code>, we hand an object that we mock <code>ss</code> which will be the value of <code>Spreadsheet_App</code> of the call.</p>
+<pre class="prettyprint source lang-js"><code>function Test() {
+  const {description, it, assert} = Utgs.module()
+  const ss = SS();  // SS is defined below
+  const values = ['a', 'b', 'c'];
+  writeRow('any', 3, values, {Spreadsheet_App: ss})
+  const actual = ss.state.arr;
+  const expected = [values];
+  assert.arrayEquals({actual, expected, comment: 'convert to 2d array'});
+}
+</code></pre>
+<p>We just need some code that makes <code>const ss = SS()</code> work so that we can do <code>ss.state.arr</code> later and look at what was passed to <code>setValues</code>.</p>
+<pre class="prettyprint source lang-js"><code>// setup the mock for dependency injection
+// (these arrow functions without return statements are returning objects,
+//   hence the perhaps odd-looking syntax)
+const SS = () => {
+  const state = {};
+  return {
+    getSheetByName: () => ({
+      getRange: () => ({
+        setValues: (arr) => {
+          state.arr = [arr];
+        }
+      })
+    })
+  };
+};
+</code></pre>
+<p>That way, our test works as expected.</p>
+<h3>Pitfalls</h3>
+<p>Eagle-eye appscripters might have balked at the code above in the dependency injection example. In fact, the test we created will pass, but when used in a real-life situation, will not work as expected, and will fail with the error:</p>
+<pre class="prettyprint source"><code>The number of columns in the data does not match the number of columns in the range. The data has 3 but the range has 26.
+</code></pre>
+<p>The whole point of testing is to avoid such things! We need to compensate. Let's look into it.</p>
+<p>The error is because <code>setValues</code> has the behaviour that the specified range must match the values that were passed to it. But we did this:</p>
+<pre class="prettyprint source lang-js"><code>SpreadsheetApp.getSheetByName(sheet).getRange(`A${row}:${row}`).setValues([values])
+</code></pre>
+<p>Notice the <code>getRange</code> function is passed the value of <code>A3:3</code> which specifies the whole row, rather than just three columns across as it should.</p>
+<p>The fix is fairly easy, we just have to rewrite <code>writeRow</code> using the different <code>getRange</code> with four values passed to it instead of one:</p>
+<pre class="prettyprint source lang-js"><code>function writeRow (sheet, row, values, {Spreadsheet_App=SpreadsheetApp}={}) {
+  const sheet = Spreadsheet_App.getActiveSpreadsheet().getSheetByName(sheet)
+  const range = sheet.getRange(row, 1, 1, values.length);
+  range.setValues([values])
+}
+</code></pre>
+<p>As we can see, even though we avoid having to use Google's Spreadsheet service in our testing, you still need to pay attention to how they actually work.</p>
 <h2>Node</h2>
 <p>Can also be installed via node, <code>npm install @classroomtechtools/unittesting</code>.</p>
 <p>This package has unit tests on itself, which is also useful to check out how to use it.</p>
 <p><code>npm run test</code></p>
-<h2>Motivation</h2>
-<p>Unit testing makes us better programmers.</p>
 <h2>Thanks</h2>
 <p>Much of the original code came from <a href="https://sites.google.com/site/scriptsexamples/custom-methods/gsunit">GSUnit</a>, with additional refactoring and the additional function assertions.</p>
     </article>

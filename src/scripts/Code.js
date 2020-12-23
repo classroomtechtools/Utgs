@@ -1,10 +1,9 @@
 /**
  * Returns the module object, which has `describe`, `it`, and `assert` properties.
  * @returns {module:Utgs.UtgsObject}
- * @see https://classroomtechtools.github.io/Utgs/global.html#module
  * @example
  * // init the variables
- * const {describe, it, assert} = utgs.module();
+ * const {describe, it, assert} = Utgs.module();
  *
  * // use them
  * describe("category", function () {

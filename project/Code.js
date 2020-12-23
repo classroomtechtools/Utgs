@@ -3,7 +3,7 @@
  * @returns {module:Utgs.UtgsObject}
  * @example
  * // init the variables
- * const {describe, it, assert} = utgs.module();
+ * const {describe, it, assert} = Utgs.module();
  *
  * // use them
  * describe("category", function () {
@@ -11,7 +11,7 @@
  *         assert.equals({actual: 'yes', expected: 'yes'});
  *     })
  * });
- * @see https://goog.it
+ * @see https://classroomtechtools.github.io/Utgs/global.html#module
  */
 function module() {
   return Import.UtgsObject;
