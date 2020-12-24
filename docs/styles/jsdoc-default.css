@@ -75,8 +75,9 @@ body {
 }
 
 a, a:active {
-    color: #0095dd;
+    color: #178232;
     text-decoration: none;
+    font-weight: 600;
 }
 
 a:hover {
@@ -92,7 +93,7 @@ p {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #706d77;
+    color: #178232;
     font-weight: 500;
     margin: 0;
     line-height: 1;
@@ -138,7 +139,7 @@ h3.reference-title {
 
 h3.reference-title small {
     display: inline-block;
-    color: #0095dd;
+    color: #178232;
     margin-left: 5px;
     font-weight: 500;
 }
@@ -199,6 +200,8 @@ tt, code, kbd, samp {
     margin-top: 1em;
     padding: 10px 20px;
     background-color: rgba(26, 159, 224, 0.1);
+    border: 1px solid #178232;
+    border-left: 5px solid #178232;
 }
 
 .class-description:empty {
@@ -340,7 +343,7 @@ nav>ul>li {
 }
 
 nav>ul>li.active ul {
-    border-left: 3px solid #0095dd;
+    border-left: 3px solid #178232;
     padding-left: 15px;
 }
 
@@ -349,11 +352,11 @@ nav>ul>li.active ul li.active a {
 }
 
 nav>ul>li.active a {
-    color: #0095dd;
+    color: #178232;
 }
 
 nav>ul>li>a {
-    color: #706d77;
+    color: #178232;
     padding: 20px 0;
     font-size: 18px;
 }
@@ -627,11 +630,11 @@ dl.param-type {
 }
 
 .tag-source {
-    border-bottom: 1px solid rgba(28, 160, 224, 0.35);
+    border-bottom: 1px solid #178232;
 }
 
 .tag-source:first-child {
-    border-bottom: 1px solid rgba(28, 160, 224, 1);
+    border-bottom: 1px solid #178232;
 }
 
 
@@ -857,7 +860,7 @@ td table.params, td table.props {
 }
 
 .top-nav-wrapper ul li.active {
-    border-bottom: 2px solid rgba(28, 160, 224, 1);
+    border-bottom: 2px solid #178232;
 }
 
 .search-wrapper {
@@ -899,19 +902,21 @@ input.search-input:focus {
 }
 
 .hljs-number, .hljs-built_in, .hljs-builtin-name, .hljs-literal, .hljs-type, .hljs-params, .hljs-deletion {
-    color: #f99b15
+    color: #a86c16
 }
 
 .hljs-title, .hljs-section, .hljs-attribute {
-    color: #fec418
+    color: #d45615;
+    font-weight: 500;
 }
 
 .hljs-string, .hljs-symbol, .hljs-bullet, .hljs-addition {
-    color: #48b685
+    color: #108787
 }
 
 .hljs-keyword, .hljs-selector-tag {
-    color: #815ba4
+    color: #815ba4;
+    font-weight: 500;
 }
 
 .hljs {
