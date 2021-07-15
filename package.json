@@ -18,7 +18,7 @@
     "clasp:logout": "clasp logout",
     "clasp:logs": "clasp logs",
     "clasp:push": "npm run bundle && clasp push",
-    "generate-docs": "node_modules/.bin/jsdoc --configure jsdoc-config.json --verbose --readme README.md"
+    "generate-docs": "docsify init ./docs"
   },
   "ava": {
     "verbose": true
